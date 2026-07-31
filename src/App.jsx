@@ -10,7 +10,7 @@ import { playClick, playNoteToggle, playErase, playIncorrect, setMuted } from '.
 import { getAIHint } from './utils/aiHintEngine';
 import { Sparkles, CheckCircle2 } from 'lucide-react';
 
-function useBoardSize() {
+function useBoardSize(gridSize) {
   const [size, setSize] = useState({ board: 320, cellFont: 18, noteFont: 7, actionHeight: 42, actionFontSize: 11, numHeight: 44, numFontSize: 18 });
 
   useEffect(() => {
@@ -21,11 +21,11 @@ function useBoardSize() {
 
       if (isDesktop) {
         const available = Math.min(h * 0.60, w * 0.55, 580);
-        const board = Math.floor(available / 9) * 9;
+        const board = Math.floor(available / gridSize) * gridSize;
         setSize({
           board,
-          cellFont: Math.floor(board / 9 * 0.55),
-          noteFont: Math.floor(board / 9 * 0.24),
+          cellFont: Math.floor(board / gridSize * 0.55),
+          noteFont: Math.floor(board / gridSize * 0.24),
           actionHeight: 48,
           actionFontSize: 12,
           numHeight: 52,
@@ -33,8 +33,8 @@ function useBoardSize() {
         });
       } else {
         const available = Math.min(w - 20, h * 0.48);
-        const board = Math.floor(available / 9) * 9;
-        const cellSize = board / 9;
+        const board = Math.floor(available / gridSize) * gridSize;
+        const cellSize = board / gridSize;
         const actionHeight = Math.max(34, Math.min(42, h * 0.045));
         const numHeight = Math.max(38, Math.min(48, h * 0.052));
         setSize({
@@ -51,7 +51,7 @@ function useBoardSize() {
     compute();
     window.addEventListener('resize', compute);
     return () => window.removeEventListener('resize', compute);
-  }, []);
+  }, [gridSize]);
 
   return size;
 }
@@ -61,11 +61,12 @@ export default function App() {
   const [theme, setTheme] = useState('pink');
   const [isMuted, setIsMutedState] = useState(false);
   const [difficulty, setDifficulty] = useState('medium');
+  const [gridSize, setGridSize] = useState(9);
 
-  const [initialBoard, setInitialBoard] = useState(createEmptyBoard());
-  const [board, setBoard] = useState(createEmptyBoard());
-  const [solution, setSolution] = useState(createEmptyBoard());
-  const [notes, setNotes] = useState(createEmptyBoard().map(() => Array(9).fill(null).map(() => [])));
+  const [initialBoard, setInitialBoard] = useState(createEmptyBoard(gridSize));
+  const [board, setBoard] = useState(createEmptyBoard(gridSize));
+  const [solution, setSolution] = useState(createEmptyBoard(gridSize));
+  const [notes, setNotes] = useState(createEmptyBoard(gridSize).map(() => Array(gridSize).fill(null).map(() => [])));
 
   const [selectedCell, setSelectedCell] = useState(null);
   const [notesMode, setNotesMode] = useState(false);
@@ -83,15 +84,15 @@ export default function App() {
   const [aiHint, setAiHint] = useState(null);
   const [isAILoading, setIsAILoading] = useState(false);
 
-  const sizes = useBoardSize();
+  const sizes = useBoardSize(gridSize);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
-  const initGame = useCallback((diff = difficulty) => {
-    const { puzzle, solution: sol } = generateSudoku(diff);
-    const emptyNotes = createEmptyBoard().map(() => Array(9).fill(null).map(() => []));
+  const initGame = useCallback((diff = difficulty, gs = gridSize) => {
+    const { puzzle, solution: sol } = generateSudoku(diff, gs);
+    const emptyNotes = createEmptyBoard(gs).map(() => Array(gs).fill(null).map(() => []));
     setInitialBoard(puzzle.map(r => [...r]));
     setBoard(puzzle.map(r => [...r]));
     setSolution(sol.map(r => [...r]));
@@ -106,11 +107,11 @@ export default function App() {
     setIsVictory(false);
     setIsPaused(false);
     setAiHint(null);
-  }, [difficulty]);
+  }, [difficulty, gridSize]);
 
   useEffect(() => {
-    if (isUnlocked) initGame(difficulty);
-  }, [isUnlocked, difficulty, initGame]);
+    if (isUnlocked) initGame(difficulty, gridSize);
+  }, [isUnlocked, difficulty, gridSize, initGame]);
 
   useEffect(() => {
     let interval = null;
@@ -134,8 +135,8 @@ export default function App() {
   };
 
   const checkVictory = (b) => {
-    for (let r = 0; r < 9; r++)
-      for (let c = 0; c < 9; c++)
+    for (let r = 0; r < gridSize; r++)
+      for (let c = 0; c < gridSize; c++)
         if (b[r][c] !== solution[r][c]) return false;
     return true;
   };
@@ -209,7 +210,7 @@ export default function App() {
   };
 
   const handleAutoNotes = () => {
-    const generated = generateAllCandidates(board);
+    const generated = generateAllCandidates(board, gridSize);
     setNotes(generated);
     pushHistory(board, generated);
   };
@@ -217,7 +218,7 @@ export default function App() {
   const handleRequestAIHint = async () => {
     setIsAILoading(true);
     setHintsUsed(prev => prev + 1);
-    const hint = await getAIHint({ board, solution, selectedCell, candidatesMap: notes });
+    const hint = await getAIHint({ board, solution, selectedCell, candidatesMap: notes, gridSize });
     setAiHint(hint);
     setIsAILoading(false);
   };
@@ -236,7 +237,8 @@ export default function App() {
 
   const handleKeyDown = useCallback((e) => {
     if (!isUnlocked || isPaused || isVictory) return;
-    if (e.key >= '1' && e.key <= '9') {
+    const maxNum = gridSize;
+    if (e.key >= '1' && e.key <= String(maxNum)) {
       handleInputNumber(parseInt(e.key, 10));
     } else if (e.key === 'Backspace' || e.key === 'Delete') {
       handleErase();
@@ -249,13 +251,13 @@ export default function App() {
         if (!prev) return [0, 0];
         let [r, c] = prev;
         if (e.key === 'ArrowUp') r = Math.max(0, r - 1);
-        if (e.key === 'ArrowDown') r = Math.min(8, r + 1);
+        if (e.key === 'ArrowDown') r = Math.min(gridSize - 1, r + 1);
         if (e.key === 'ArrowLeft') c = Math.max(0, c - 1);
-        if (e.key === 'ArrowRight') c = Math.min(8, c + 1);
+        if (e.key === 'ArrowRight') c = Math.min(gridSize - 1, c + 1);
         return [r, c];
       });
     }
-  }, [isUnlocked, isPaused, isVictory, selectedCell, notesMode, board, initialBoard, notes, solution]);
+  }, [isUnlocked, isPaused, isVictory, selectedCell, notesMode, board, initialBoard, notes, solution, gridSize]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
@@ -291,7 +293,9 @@ export default function App() {
         toggleMute={toggleMute}
         difficulty={difficulty}
         setDifficulty={setDifficulty}
-        onNewGame={() => initGame(difficulty)}
+        gridSize={gridSize}
+        setGridSize={setGridSize}
+        onNewGame={() => initGame(difficulty, gridSize)}
         onLock={() => setIsUnlocked(false)}
       />
 
@@ -317,6 +321,7 @@ export default function App() {
         boardSize={sizes.board}
         cellFontSize={sizes.cellFont}
         noteFontSize={sizes.noteFont}
+        gridSize={gridSize}
       />
 
       <ControlPanel
@@ -337,6 +342,7 @@ export default function App() {
         actionFontSize={sizes.actionFontSize}
         numHeight={sizes.numHeight}
         numFontSize={sizes.numFontSize}
+        gridSize={gridSize}
       />
 
       <div className="embedded-ai-card">
@@ -388,7 +394,7 @@ export default function App() {
 
       <VictoryModal
         isOpen={isVictory}
-        onNextPuzzle={() => initGame(difficulty)}
+        onNextPuzzle={() => initGame(difficulty, gridSize)}
         time={time}
         mistakes={mistakes}
         hintsUsed={hintsUsed}

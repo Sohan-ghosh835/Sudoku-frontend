@@ -9,6 +9,8 @@ export default function Header({
   toggleMute,
   difficulty,
   setDifficulty,
+  gridSize,
+  setGridSize,
   onNewGame,
   onLock
 }) {
@@ -22,12 +24,44 @@ export default function Header({
 
   return (
     <header className="header-bar">
-      <div className="brand-title">
-        <Heart size={20} fill="currentColor" />
-        <span>SudoBunny</span>
+      <div className="header-top-row">
+        <div className="brand-title">
+          <Heart size={20} fill="currentColor" />
+          <span>SudoBunny</span>
+        </div>
+
+        <div className="header-icons">
+          <button className="icon-btn" onClick={onNewGame} title="New Game">
+            <RefreshCw size={16} />
+          </button>
+          <button className="icon-btn" onClick={cycleTheme} title="Change Theme">
+            <Palette size={16} />
+          </button>
+          <button className="icon-btn" onClick={toggleMute} title="Toggle Audio">
+            {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
+          </button>
+          <button className="icon-btn" onClick={onLock} title="Lock App">
+            <Lock size={16} />
+          </button>
+        </div>
       </div>
 
-      <div className="header-actions">
+      <div className="header-bottom-row">
+        <div className="grid-size-toggle">
+          <button
+            className={`size-toggle-btn ${gridSize === 6 ? 'active' : ''}`}
+            onClick={() => { playClick(); setGridSize(6); }}
+          >
+            6×6
+          </button>
+          <button
+            className={`size-toggle-btn ${gridSize === 9 ? 'active' : ''}`}
+            onClick={() => { playClick(); setGridSize(9); }}
+          >
+            9×9
+          </button>
+        </div>
+
         <select
           className="difficulty-select"
           value={difficulty}
@@ -42,22 +76,6 @@ export default function Header({
           <option value="expert">Expert</option>
           <option value="infinite">Infinite</option>
         </select>
-
-        <button className="icon-btn" onClick={onNewGame} title="New Game">
-          <RefreshCw size={16} />
-        </button>
-
-        <button className="icon-btn" onClick={cycleTheme} title="Change Theme">
-          <Palette size={16} />
-        </button>
-
-        <button className="icon-btn" onClick={toggleMute} title="Toggle Audio">
-          {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
-        </button>
-
-        <button className="icon-btn" onClick={onLock} title="Lock App">
-          <Lock size={16} />
-        </button>
       </div>
     </header>
   );

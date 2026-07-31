@@ -3,8 +3,8 @@ import { getCandidates } from './sudokuGenerator';
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 
-export async function getAIHint({ board, solution, selectedCell, candidatesMap }) {
-  const localHint = getLocalLogicalHint(board, solution, selectedCell, candidatesMap);
+export async function getAIHint({ board, solution, selectedCell, candidatesMap, gridSize = 9 }) {
+  const localHint = getLocalLogicalHint(board, solution, selectedCell, candidatesMap, gridSize);
 
   if (BACKEND_URL) {
     try {
@@ -34,6 +34,7 @@ export async function getAIHint({ board, solution, selectedCell, candidatesMap }
 Selected cell: ${selectedCell ? `Row ${selectedCell[0] + 1}, Column ${selectedCell[1] + 1}` : 'None selected'}.
 Rule-based analysis: ${localHint.technique} — ${localHint.explanation}
 Target digit for selected cell: ${selectedCell ? solution[selectedCell[0]][selectedCell[1]] : 'N/A'}
+Grid size: ${gridSize}x${gridSize}
 
 Write a short, clear hint (2-3 sentences). Be warm and encouraging but do not use emojis or excessive affection. Explain the logical step without revealing the answer outright. Address them as "you" naturally.`;
 
@@ -78,7 +79,7 @@ Write a short, clear hint (2-3 sentences). Be warm and encouraging but do not us
   };
 }
 
-export function getLocalLogicalHint(board, solution, selectedCell, candidatesMap) {
+export function getLocalLogicalHint(board, solution, selectedCell, candidatesMap, gridSize = 9) {
   if (selectedCell) {
     const [r, c] = selectedCell;
     if (board[r][c] !== 0) {
@@ -90,7 +91,7 @@ export function getLocalLogicalHint(board, solution, selectedCell, candidatesMap
       };
     }
 
-    const cands = getCandidates(board, r, c);
+    const cands = getCandidates(board, r, c, gridSize);
     const correctVal = solution[r][c];
 
     if (cands.length === 1) {
@@ -103,19 +104,20 @@ export function getLocalLogicalHint(board, solution, selectedCell, candidatesMap
     }
 
     if (cands.length > 1) {
+      const boxLabel = gridSize === 6 ? '2×3 box' : '3×3 box';
       return {
         technique: "Candidate Elimination",
-        explanation: `Row ${r + 1}, Column ${c + 1} can hold: [${cands.join(', ')}]. Look at which numbers already appear in the same row, column, and 3x3 box to narrow it down further.`,
+        explanation: `Row ${r + 1}, Column ${c + 1} can hold: [${cands.join(', ')}]. Look at which numbers already appear in the same row, column, and ${boxLabel} to narrow it down further.`,
         suggestedCell: [r, c],
         suggestedValue: correctVal
       };
     }
   }
 
-  for (let r = 0; r < 9; r++) {
-    for (let c = 0; c < 9; c++) {
+  for (let r = 0; r < gridSize; r++) {
+    for (let c = 0; c < gridSize; c++) {
       if (board[r][c] === 0) {
-        const cands = getCandidates(board, r, c);
+        const cands = getCandidates(board, r, c, gridSize);
         if (cands.length === 1) {
           return {
             technique: "Naked Single",
@@ -128,8 +130,8 @@ export function getLocalLogicalHint(board, solution, selectedCell, candidatesMap
     }
   }
 
-  for (let r = 0; r < 9; r++) {
-    for (let c = 0; c < 9; c++) {
+  for (let r = 0; r < gridSize; r++) {
+    for (let c = 0; c < gridSize; c++) {
       if (board[r][c] === 0) {
         return {
           technique: "Suggested Cell",

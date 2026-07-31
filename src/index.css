@@ -313,11 +313,23 @@ html[data-theme='cyber'] body {
   width: 100%;
   max-width: 600px;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 0.35rem;
   margin-bottom: 0.45rem;
   z-index: 10;
   flex-shrink: 0;
+}
+
+.header-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-bottom-row {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
 }
 
 .brand-title {
@@ -330,10 +342,42 @@ html[data-theme='cyber'] body {
   font-family: var(--font-family);
 }
 
-.header-actions {
+.header-icons {
   display: flex;
   align-items: center;
   gap: 0.35rem;
+}
+
+.grid-size-toggle {
+  display: flex;
+  background: var(--bg-secondary);
+  border: 1px solid var(--glass-border);
+  border-radius: 9px;
+  overflow: hidden;
+  height: 30px;
+}
+
+.size-toggle-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-weight: 700;
+  font-size: 0.72rem;
+  font-family: var(--font-family);
+  padding: 0 0.55rem;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  touch-action: manipulation;
+}
+
+.size-toggle-btn.active {
+  background: var(--accent);
+  color: white;
+}
+
+.size-toggle-btn:hover:not(.active) {
+  background: var(--accent-light);
+  color: var(--accent);
 }
 
 .icon-btn {
@@ -410,8 +454,6 @@ html[data-theme='cyber'] body {
 
 .sudoku-board {
   display: grid;
-  grid-template-columns: repeat(9, 1fr);
-  grid-template-rows: repeat(9, 1fr);
   background: var(--board-bg);
   border: 2.5px solid var(--grid-line-thick);
   border-radius: 12px;
@@ -436,12 +478,8 @@ html[data-theme='cyber'] body {
   touch-action: manipulation;
 }
 
-.sudoku-cell:nth-child(3n) {
+.sudoku-cell.border-right-thick {
   border-right: 2px solid var(--grid-line-thick);
-}
-
-.sudoku-cell:nth-child(9n) {
-  border-right: none;
 }
 
 .sudoku-cell.border-bottom-thick {
@@ -540,7 +578,6 @@ html[data-theme='cyber'] body {
 
 .numpad-grid {
   display: grid;
-  grid-template-columns: repeat(9, 1fr);
   gap: 0.3rem;
 }
 
@@ -716,14 +753,49 @@ html[data-theme='cyber'] body {
   .header-bar {
     max-width: 680px;
     margin-bottom: 0.7rem;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
   }
 
-  .brand-title { font-size: 1.4rem; }
+  .header-top-row {
+    display: contents;
+  }
+
+  .brand-title {
+    font-size: 1.4rem;
+    order: 1;
+  }
+
+  .header-bottom-row {
+    margin-left: auto;
+    order: 2;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .header-icons {
+    order: 3;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
 
   .icon-btn {
     width: 40px;
     height: 40px;
     border-radius: 11px;
+  }
+
+  .grid-size-toggle {
+    height: 36px;
+  }
+
+  .size-toggle-btn {
+    font-size: 0.8rem;
+    padding: 0 0.7rem;
   }
 
   .difficulty-select {
@@ -765,6 +837,9 @@ html[data-theme='cyber'] body {
 @media (max-width: 380px) {
   .brand-title { font-size: 0.95rem; }
   .icon-btn { width: 28px; height: 28px; }
+  .header-icons { gap: 0.22rem; }
   .difficulty-select { max-width: 68px; font-size: 0.7rem; padding: 0.22rem 0.28rem; }
+  .grid-size-toggle { height: 26px; }
+  .size-toggle-btn { font-size: 0.65rem; padding: 0 0.4rem; }
   .stat-item { font-size: 0.7rem; gap: 0.18rem; }
 }

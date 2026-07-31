@@ -17,8 +17,11 @@ export default function ControlPanel({
   actionFontSize = 11,
   numHeight = 44,
   numFontSize = 18,
+  gridSize = 9,
 }) {
   const iconSize = Math.max(14, Math.floor(actionHeight * 0.38));
+  const nums = [];
+  for (let i = 1; i <= gridSize; i++) nums.push(i);
 
   return (
     <div className="control-panel">
@@ -80,8 +83,8 @@ export default function ControlPanel({
         </button>
       </div>
 
-      <div className="numpad-grid">
-        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+      <div className="numpad-grid" style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }}>
+        {nums.map((num) => (
           <button
             key={num}
             className="num-btn"
